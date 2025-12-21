@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # R&D Tax Credit — AI Agent (MVP)
 
 Short description
@@ -23,3 +24,6 @@ Quick start (Windows / PowerShell)
 Notes
 - .env and API keys must remain local. Use GitHub Secrets for CI.
 - See IMPLEMENTATION_SUMMARY.md and QUICK_START.md for details.
+=======
+# R-D_Tax-_Classifier
+>>>>>>> f1e32ef4c925b00ff42df311a55b57a20c05f4c2
