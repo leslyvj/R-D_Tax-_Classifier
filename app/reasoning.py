@@ -10,9 +10,19 @@ from .models import ProjectRecord, ClassificationResult, TraceStep, TraceEnvelop
 
 # --- Env ---
 load_dotenv()
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "http://localhost:11434/v1")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-4.1")
-USE_LLM = bool(OPENAI_API_KEY)
+
+_LOCAL_PREFIXES = ("http://localhost", "http://127.0.0.1", "https://localhost", "https://127.0.0.1")
+_IS_LOCAL_LLM = LLM_BASE_URL.startswith(_LOCAL_PREFIXES)
+
+# Allow a dummy key for local LLMs so the SDK doesn't raise auth errors
+if not OPENAI_API_KEY and _IS_LOCAL_LLM:
+    OPENAI_API_KEY = "lm-studio"
+
+# Treat presence of a key OR a local base URL as "LLM enabled"
+USE_LLM = bool(OPENAI_API_KEY) or _IS_LOCAL_LLM
 
 # Lazy imports (SDK may not exist in some envs)
 try:
@@ -21,8 +31,27 @@ except Exception:
     OpenAI = None          # type: ignore
     AsyncOpenAI = None     # type: ignore
 
+# Client builders (include base_url + dummy key support)
+def _make_async_client():
+    if not (USE_LLM and AsyncOpenAI):
+        return None
+    try:
+        return AsyncOpenAI(api_key=OPENAI_API_KEY, base_url=LLM_BASE_URL, timeout=60, max_retries=1)
+    except Exception:
+        return None
+
+
+def _make_sync_client():
+    if not (USE_LLM and OpenAI):
+        return None
+    try:
+        return OpenAI(api_key=OPENAI_API_KEY, base_url=LLM_BASE_URL, timeout=60, max_retries=1)
+    except Exception:
+        return None
+
+
 # Async client with short timeout & light retry (created only if LLM enabled)
-_async_client = AsyncOpenAI(timeout=60, max_retries=1) if (USE_LLM and AsyncOpenAI) else None
+_async_client = _make_async_client()
 
 LLM_SYSTEM_PROMPT = (
     "You are an expert IRS R&D Tax Credit (Section 41) eligibility analyst with deep expertise in "
@@ -265,16 +294,15 @@ def _backfill_rationale_sync(description: str, eligible: bool) -> str:
     if not (USE_LLM and OpenAI):
         return _heuristic_rationale(description, eligible)
     try:
-        client = OpenAI(timeout=60, max_retries=1)
+        client = _make_sync_client()
+        if client is None:
+            return _heuristic_rationale(description, eligible)
         msgs = [
             {"role": "system", "content": "Write one short sentence (<=30 words) explaining the R&D eligibility under IRS Section 41. Be specific and factual."},
             {"role": "user", "content": f"Eligible={eligible}. Project: {description}"}
         ]
         params = _build_chat_params(MODEL_NAME, msgs, want_json=False)
-        if "max_tokens" in params:
-            params["max_tokens"] = 40
-        else:
-            params["max_tokens"] = 40
+        params["max_tokens"] = 40
         r = client.chat.completions.create(**params)
         return (r.choices[0].message.content or "").strip() or _heuristic_rationale(description, eligible)
     except Exception:
@@ -340,7 +368,10 @@ def _chat_llm_sync(model: str, messages: list) -> Dict[str, Any]:
 
     last_exc = None
     for candidate in _model_candidates():
-        client = OpenAI(timeout=60, max_retries=1)
+        client = _make_sync_client()
+        if client is None:
+            last_exc = RuntimeError("LLM client unavailable")
+            break
         params = _build_chat_params(candidate, messages, want_json=True)
         try:
             r = client.chat.completions.create(**params)
@@ -408,7 +439,9 @@ def analyze_with_dual_check(
     primary_result, primary_trace = analyze_project(record, user_id=f"{user_id}:primary")
     
     # Get verifier analysis (independently)
-    client = OpenAI(timeout=60, max_retries=1)
+    client = _make_sync_client()
+    if client is None:
+        raise RuntimeError("LLM client unavailable for verifier model.")
     verifier_msgs = [
         {"role": "system", "content": LLM_SYSTEM_PROMPT},
         {"role": "user", "content":
@@ -592,7 +625,7 @@ def analyze_project_with_advanced_nlp(
         client = None
         if USE_LLM and OpenAI is not None:
             try:
-                client = OpenAI(timeout=60, max_retries=1)
+                client = _make_sync_client()
             except Exception:
                 client = None
 
