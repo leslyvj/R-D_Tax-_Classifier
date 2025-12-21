@@ -12,11 +12,11 @@ AI-assisted tool to classify projects for IRS §41 R&D tax credit eligibility, c
    # .env
    VALID_API_KEYS=demo-key
    USER_ROLES={"admin":"demo-key"}
-   # For OpenAI cloud (optional)
-   # OPENAI_API_KEY=sk-...
-   # OPENAI_MODEL=gpt-4o-mini
-   # For local LLM (e.g., LM Studio / Ollama)
-   # LLM_BASE_URL=http://localhost:11434/v1
+    For OpenAI cloud (optional)
+    OPENAI_API_KEY=sk-...
+    OPENAI_MODEL=gpt-4o-mini
+    For local LLM (e.g., LM Studio / Ollama)
+    LLM_BASE_URL=http://localhost:11434/v1
 
 3) Start backend (FastAPI)
    uvicorn app.main:app --reload --port 8000
