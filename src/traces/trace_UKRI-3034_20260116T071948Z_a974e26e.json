@@ -1,0 +1,38 @@
+{
+  "user_id": "demo-user",
+  "project_id": "UKRI-3034",
+  "steps": [
+    {
+      "step_id": "cf5ad4f7-5502-4aa9-b25c-df04aaca64f2",
+      "timestamp": "2026-01-16T07:19:40.856325Z",
+      "model_name": "parser:v0",
+      "thought": "Parse incoming project record into analysis fields.",
+      "action": "parse",
+      "observation": "Got description length=244",
+      "confidence": 1.0
+    },
+    {
+      "step_id": "b23969e0-4076-441a-91da-452b21429ad5",
+      "timestamp": "2026-01-16T07:19:40.857229Z",
+      "model_name": "openai:qwen2.5:7b",
+      "thought": "Apply IRS Section 41 via LLM (Tier 3).",
+      "action": "classify_with_llm",
+      "observation": "chat.completions (JSON-preferred)",
+      "confidence": 0.5
+    },
+    {
+      "step_id": "8a13f153-0751-4e43-8d2b-cd304a745c11",
+      "timestamp": "2026-01-16T07:19:48.090604Z",
+      "model_name": "decision:v0",
+      "thought": "Consolidate evidence and decide eligibility.",
+      "action": "decide",
+      "observation": "eligible=True, confidence=0.85",
+      "confidence": 0.85
+    }
+  ],
+  "model_name": "openai:qwen2.5:7b",
+  "region": "US-IRS-Section-41",
+  "reviewer_id": null,
+  "legal_hold_flag": false,
+  "checksum_sha256": "e4bbdb17515cef7ae509e7f45fd712a65e0980bb122f2c1fb16320bfacb2f05b"
+}

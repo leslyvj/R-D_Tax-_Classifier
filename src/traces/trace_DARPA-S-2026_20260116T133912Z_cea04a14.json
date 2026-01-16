@@ -1,0 +1,38 @@
+{
+  "user_id": "demo-user",
+  "project_id": "DARPA-S-2026",
+  "steps": [
+    {
+      "step_id": "15b5a32b-1590-4a29-8348-a1294a221a8b",
+      "timestamp": "2026-01-16T13:39:03.313488Z",
+      "model_name": "parser:v0",
+      "thought": "Parse incoming project record into analysis fields.",
+      "action": "parse",
+      "observation": "Got description length=148",
+      "confidence": 1.0
+    },
+    {
+      "step_id": "de760c03-5945-4862-ad6c-913f9d12866a",
+      "timestamp": "2026-01-16T13:39:03.314343Z",
+      "model_name": "openai:qwen2.5:7b",
+      "thought": "Apply IRS Section 41 via LLM (Tier 3).",
+      "action": "classify_with_llm",
+      "observation": "chat.completions (JSON-preferred)",
+      "confidence": 0.5
+    },
+    {
+      "step_id": "3cbdb4c8-1915-4769-aec8-2a97a174491c",
+      "timestamp": "2026-01-16T13:39:12.937903Z",
+      "model_name": "decision:v0",
+      "thought": "Consolidate evidence and decide eligibility.",
+      "action": "decide",
+      "observation": "eligible=True, confidence=0.40",
+      "confidence": 0.4
+    }
+  ],
+  "model_name": "openai:qwen2.5:7b",
+  "region": "US-IRS-Section-41",
+  "reviewer_id": null,
+  "legal_hold_flag": false,
+  "checksum_sha256": "29247c194b5d6f79ce971ea322476ead0a016ac5f62ede5f12cb763d8e3f7921"
+}
